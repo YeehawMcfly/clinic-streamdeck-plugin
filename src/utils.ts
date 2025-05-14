@@ -36,7 +36,7 @@ export function generatePatientReference(patientId: number): string {
  */
 export async function validateRoomId(roomId: number): Promise<boolean> {
   try {
-    const response = await fetch(`http://localhost:3000/rooms/${roomId}`);
+    const response = await fetch(`http://localhost:3001/rooms/${roomId}`);
     return response.status === 200;
   } catch (error) {
     console.error('Room validation error:', error);
