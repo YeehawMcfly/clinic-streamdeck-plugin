@@ -1,0 +1,201 @@
+{
+  "checkins": [
+    {
+      "id": 1,
+      "patientId": 423,
+      "patientReference": "PT2025-000423",
+      "time": "2025-05-11T10:15:32Z",
+      "status": "checked-in",
+      "staffId": "user-107",
+      "notes": "Patient arrived early for appointment"
+    },
+    {
+      "id": 2,
+      "patientId": 156,
+      "patientReference": "PT2025-000156",
+      "time": "2025-05-11T10:35:17Z",
+      "status": "checked-in",
+      "staffId": "user-212",
+      "notes": "Follow-up appointment"
+    },
+    {
+      "patientId": 260,
+      "patientReference": "PT2025-000260",
+      "time": "2025-05-14T14:09:26.242Z",
+      "status": "checked-in",
+      "staffId": "current-user-123",
+      "notes": "",
+      "id": 3
+    },
+    {
+      "patientId": 297,
+      "patientReference": "PT2025-000297",
+      "time": "2025-05-14T14:12:39.775Z",
+      "status": "checked-in",
+      "staffId": "current-user-123",
+      "notes": "",
+      "id": 4
+    },
+    {
+      "patientId": 92,
+      "patientReference": "PT2025-000092",
+      "time": "2025-05-14T14:20:20.380Z",
+      "status": "checked-in",
+      "staffId": "current-user-123",
+      "notes": "",
+      "id": 5
+    },
+    {
+      "patientId": 864,
+      "patientReference": "PT2025-000864",
+      "time": "2025-05-14T14:42:23.378Z",
+      "status": "checked-in",
+      "staffId": "current-user-123",
+      "notes": "",
+      "id": 6
+    }
+  ],
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Exam Room 1",
+      "status": "occupied",
+      "lastCleaned": "2025-05-14T14:20:22.124Z",
+      "lastPatient": 143,
+      "equipment": [
+        "Standard",
+        "EKG"
+      ],
+      "notes": "Needs supply restock",
+      "currentPatientId": 474,
+      "ready": true
+    },
+    {
+      "id": 2,
+      "name": "Exam Room 2",
+      "status": "ready",
+      "lastCleaned": "2025-05-11T10:45:00Z",
+      "lastPatient": 156,
+      "equipment": [
+        "Standard",
+        "Otoscope"
+      ],
+      "notes": "",
+      "currentPatientId": null
+    },
+    {
+      "id": 3,
+      "name": "Procedure Room",
+      "status": "occupied",
+      "lastCleaned": "2025-05-11T08:15:00Z",
+      "lastPatient": null,
+      "equipment": [
+        "Standard",
+        "Advanced",
+        "Ultrasound"
+      ],
+      "notes": "Reserved for Dr. Johnson at 11:30",
+      "currentPatientId": 423
+    }
+  ],
+  "alerts": [
+    {
+      "id": 1,
+      "type": "assistance",
+      "message": "Assistance needed in Room 3",
+      "time": "2025-05-11T09:45:23Z",
+      "priority": "medium",
+      "sender": "user-145",
+      "requiresAcknowledgment": true,
+      "acknowledgedBy": "user-212",
+      "acknowledgedAt": "2025-05-11T09:46:02Z",
+      "roomId": 3
+    },
+    {
+      "id": 2,
+      "type": "medical",
+      "message": "Medical emergency in Room 1",
+      "time": "2025-05-11T10:12:07Z",
+      "priority": "high",
+      "sender": "user-107",
+      "requiresAcknowledgment": true,
+      "acknowledgedBy": null,
+      "acknowledgedAt": null,
+      "roomId": 1
+    },
+    {
+      "type": "medical",
+      "message": "Medical emergency in Room 1",
+      "time": "2025-05-14T14:09:32.081Z",
+      "priority": "high",
+      "sender": "current-user-123",
+      "requiresAcknowledgment": true,
+      "acknowledgedBy": null,
+      "acknowledgedAt": null,
+      "id": 3
+    },
+    {
+      "type": "assistance",
+      "message": "Assistance needed in Room 2",
+      "time": "2025-05-14T14:09:35.888Z",
+      "priority": "medium",
+      "sender": "current-user-123",
+      "requiresAcknowledgment": true,
+      "acknowledgedBy": null,
+      "acknowledgedAt": null,
+      "id": 4
+    }
+  ],
+  "staff": [
+    {
+      "id": "user-107",
+      "name": "Dr. Sarah Chen",
+      "role": "Physician",
+      "specialty": "Family Medicine",
+      "status": "available"
+    },
+    {
+      "id": "user-145",
+      "name": "Michael Rodriguez",
+      "role": "Nurse",
+      "specialty": "General",
+      "status": "with-patient"
+    },
+    {
+      "id": "user-212",
+      "name": "Jessica Taylor",
+      "role": "Medical Assistant",
+      "specialty": null,
+      "status": "available"
+    }
+  ],
+  "patients": [
+    {
+      "id": 143,
+      "reference": "PT2025-000143",
+      "name": "John Smith",
+      "dob": "1985-06-22",
+      "lastVisit": "2025-04-03"
+    },
+    {
+      "id": 156,
+      "reference": "PT2025-000156",
+      "name": "Emily Johnson",
+      "dob": "1978-11-14",
+      "lastVisit": "2025-05-11"
+    },
+    {
+      "id": 423,
+      "reference": "PT2025-000423",
+      "name": "Robert Williams",
+      "dob": "1992-03-08",
+      "lastVisit": "2025-05-11"
+    }
+  ],
+  "settings": {
+    "clinicName": "Woodside Medical Center",
+    "alertTimeoutMinutes": 5,
+    "autoCloseCheckins": true,
+    "requireRoomSanitization": true
+  }
+}

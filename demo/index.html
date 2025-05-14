@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClinicStreamDeck Assistant Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f0f4f8;
+      color: #333;
+    }
+    
+    h1, h2, h3 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+      margin-top: 30px;
+    }
+    h1 { font-size: 2em;}
+    h2 { font-size: 1.5em;}
+    h3 { font-size: 1.2em; border-bottom-width: 1px; }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .main-column {
+      flex: 2;
+    }
+    .sidebar-column {
+      flex: 1;
+    }
+    
+    .streamdeck {
+      background-color: #222;
+      border-radius: 15px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(5, 90px); /* Adjusted size */
+      grid-gap: 10px; /* Adjusted gap */
+      width: fit-content;
+      margin: 20px auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .button {
+      width: 90px; /* Adjusted size */
+      height: 90px; /* Adjusted size */
+      background-color: #333;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      font-size: 11px; /* Adjusted font size */
+      padding: 5px;
+      box-sizing: border-box;
+    }
+     .button .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 5px;
+      background-color: rgba(255, 255, 255, 0.5);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    
+    .button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .button:active {
+      transform: translateY(0px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      background-color: #2a2a2a;
+    }
+    
+    .button.checkin { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .button.room { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .button.alert { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    
+    .button-icon { font-size: 20px; margin-bottom: 3px; }
+    .button-text { text-align: center; line-height: 1.2; }
+    
+    .logs {
+      background-color: #2c3e50;
+      border-radius: 8px;
+      color: #ecf0f1;
+      padding: 15px;
+      font-family: monospace;
+      height: 250px;
+      overflow-y: auto;
+      margin-top: 20px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    .log-entry { margin: 5px 0; padding: 5px; border-bottom: 1px solid #34495e; }
+    .request { color: #3498db; }
+    .success { color: #2ecc71; }
+    .error { color: #e74c3c; }
+    .feedback { color: #f39c12; }
+    
+    .api-status {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+      padding: 10px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .status-indicator { width: 15px; height: 15px; border-radius: 50%; margin-right: 10px; }
+    .status-online { background-color: #2ecc71; }
+    .status-offline { background-color: #e74c3c; }
+    
+    .data-display, .chart-container, .floor-plan-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .chart-container {
+      height: 600px; /* Changed from 650px to a more reasonable size */
+      position: relative; /* Added for better chart positioning */
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: #f5f7fa; }
+    .ack-button {
+      padding: 3px 6px;
+      font-size: 0.8em;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .ack-button:hover { background-color: #2980b9; }
+    .acknowledged { color: #7f8c8d; font-style: italic; }
+
+    .floor-plan {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+    .fp-room {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.9em;
+      transition: background-color 0.3s ease;
+    }
+    .fp-room.ready { background-color: #d4efdf; border-left: 5px solid #2ecc71;}
+    .fp-room.occupied { background-color: #fdebd0; border-left: 5px solid #f39c12;}
+    .fp-room.needs_cleaning { background-color: #fadbd8; border-left: 5px solid #e74c3c;}
+    .fp-room .room-name { font-weight: bold; margin-bottom: 5px; }
+    .fp-room .room-patient { font-size: 0.8em; color: #555; }
+
+    /* Modal Styles */
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 1000; 
+      left: 0;
+      top: 0;
+      width: 100%; 
+      height: 100%; 
+      overflow: auto; 
+      background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; 
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .modal-buttons button {
+      padding: 10px 15px;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .modal-confirm { background-color: #e74c3c; color: white; }
+    .modal-cancel { background-color: #ccc; }
+
+  </style>
+</head>
+<body>
+  <h1>ClinicStreamDeck Assistant Simulator</h1>
+  
+  <div class="api-status">
+    <div class="status-indicator status-online" id="apiStatusIndicator"></div>
+    <span id="apiStatusText">API Server: Online</span>
+  </div>
+
+  <div class="container">
+    <div class="main-column">
+      <div class="streamdeck">
+        <!-- Row 1 -->
+        <div class="button"></div>
+        <div class="button checkin" id="checkinButton">
+          <div class="button-icon">👤</div>
+          <div class="button-text">Check-In</div>
+          <div class="progress-bar"></div>
+        </div>
+        <div class="button"></div>
+        <div class="button room" id="roomButton">
+          <div class="button-icon">🚪</div>
+          <div class="button-text">Room 1 Ready</div>
+           <div class="progress-bar"></div>
+        </div>
+        <div class="button"></div>
+        <!-- Row 2 -->
+        <div class="button"></div>
+        <div class="button alert" id="alertButton">
+          <div class="button-icon">⚠️</div>
+          <div class="button-text">Medical Emergency</div>
+           <div class="progress-bar"></div>
+        </div>
+        <div class="button"></div>
+        <div class="button" id="holdAlertButton">
+          <div class="button-icon">🔄</div>
+          <div class="button-text">Cycle Alert Type</div>
+        </div>
+        <div class="button"></div>
+        <!-- Row 3 (empty) -->
+        <div class="button"></div><div class="button"></div><div class="button"></div><div class="button"></div><div class="button"></div>
+      </div>
+
+      <h2>Clinic Floor Plan</h2>
+      <div class="floor-plan-container">
+        <div class="floor-plan" id="clinicFloorPlan">
+          <!-- Rooms will be generated by JavaScript -->
+        </div>
+      </div>
+      
+      <div class="logs" id="logsContainer">
+        <div class="log-entry">System initialized</div>
+      </div>
+    </div>
+
+    <div class="sidebar-column">
+      <h2>Live Dashboard</h2>
+      <div class="chart-container">
+        <h3>Room Status</h3>
+        <canvas id="roomStatusChart" height="525" top="0" position="absolute" width="400" style="display: block;box-sizing: border-box;height: 525px;width: 400px;position: absolute;top: 80px;right: 15px;"></canvas>
+      </div>
+
+      <div class="data-display">
+        <h3>Recent Check-ins</h3>
+        <table id="checkinTable">
+          <thead><tr><th>ID</th><th>Patient</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      
+      <div class="data-display">
+        <h3>Active Alerts</h3>
+        <table id="alertTable">
+          <thead><tr><th>Type</th><th>Message</th><th>Time</th><th>Priority</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmationModal" class="modal">
+    <div class="modal-content">
+      <p id="modalMessage">Are you sure?</p>
+      <div class="modal-buttons">
+        <button id="modalConfirmButton" class="modal-confirm">Confirm</button>
+        <button id="modalCancelButton" class="modal-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const logsContainer = document.getElementById('logsContainer');
+    const apiStatusIndicator = document.getElementById('apiStatusIndicator');
+    const apiStatusText = document.getElementById('apiStatusText');
+    const checkinButton = document.getElementById('checkinButton');
+    const roomButton = document.getElementById('roomButton');
+    const alertButton = document.getElementById('alertButton');
+    const holdAlertButton = document.getElementById('holdAlertButton');
+    const checkinTableBody = document.getElementById('checkinTable').querySelector('tbody');
+    const alertTableBody = document.getElementById('alertTable').querySelector('tbody');
+    const clinicFloorPlan = document.getElementById('clinicFloorPlan');
+    const roomStatusChartCanvas = document.getElementById('roomStatusChart').getContext('2d');
+    const confirmationModal = document.getElementById('confirmationModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalConfirmButton = document.getElementById('modalConfirmButton');
+    const modalCancelButton = document.getElementById('modalCancelButton');
+    
+    const API_URL = 'http://localhost:3001';
+    let roomStatusChart;
+    let currentModalConfirmCallback = null;
+
+    // --- Utility Functions ---
+    function addLog(message, type = '') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logsContainer.appendChild(entry);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    async function checkApiStatus() {
+      try {
+        const response = await fetch(`${API_URL}/settings`);
+        if (response.ok) {
+          apiStatusIndicator.className = 'status-indicator status-online';
+          apiStatusText.textContent = 'API Server: Online';
+          return true;
+        }
+        throw new Error('API returned error status');
+      } catch (error) {
+        apiStatusIndicator.className = 'status-indicator status-offline';
+        apiStatusText.textContent = 'API Server: Offline - Check mock API server (npm run start)';
+        addLog('API Server Offline.', 'error');
+        return false;
+      }
+    }
+
+    function generatePatientData() {
+      const patientId = Math.floor(Math.random() * 1000);
+      const year = new Date().getFullYear();
+      return { patientId, patientReference: `PT${year}-${String(patientId).padStart(6, '0')}` };
+    }
+
+    function formatDate(dateString) {
+      return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    function showButtonProgress(button, durationMs = 3000) {
+        const progressBar = button.querySelector('.progress-bar');
+        if (!progressBar) return;
+
+        let progress = 0;
+        progressBar.style.width = '0%';
+        const originalText = button.querySelector('.button-text').textContent;
+        
+        const intervalTime = 50; // Update progress every 50ms
+        const increments = durationMs / intervalTime;
+
+        const interval = setInterval(() => {
+            progress += 100 / increments;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                progressBar.style.width = '0%'; // Reset
+            }
+        }, intervalTime);
+        return () => { // Return a function to clear interval and reset if action finishes early
+            clearInterval(interval);
+            progressBar.style.width = '0%';
+        };
+    }
+
+    function showConfirmationModal(message, confirmCallback) {
+        modalMessage.textContent = message;
+        currentModalConfirmCallback = confirmCallback;
+        confirmationModal.style.display = "block";
+    }
+
+    modalConfirmButton.onclick = () => {
+        if (currentModalConfirmCallback) {
+            currentModalConfirmCallback();
+        }
+        confirmationModal.style.display = "none";
+        currentModalConfirmCallback = null;
+    };
+
+    modalCancelButton.onclick = () => {
+        confirmationModal.style.display = "none";
+        currentModalConfirmCallback = null;
+        addLog("Action cancelled by user.", "feedback");
+    };
+
+    window.onclick = (event) => { // Close modal if clicked outside
+        if (event.target == confirmationModal) {
+            confirmationModal.style.display = "none";
+            currentModalConfirmCallback = null;
+        }
+    };
+
+    // --- Data Fetching and Rendering ---
+    async function fetchData() {
+      if (!await checkApiStatus()) return;
+      
+      try {
+        const [checkinsRes, roomsRes, alertsRes] = await Promise.all([
+          fetch(`${API_URL}/checkins?_sort=time&_order=desc&_limit=5`),
+          fetch(`${API_URL}/rooms`),
+          fetch(`${API_URL}/alerts?_sort=time&_order=desc`)
+        ]);
+        const checkins = await checkinsRes.json();
+        const rooms = await roomsRes.json();
+        const alerts = await alertsRes.json();
+
+        renderCheckins(checkins);
+        renderRooms(rooms);
+        renderAlerts(alerts);
+        updateRoomStatusChart(rooms);
+
+      } catch (error) {
+        addLog(`Error fetching data: ${error.message}`, 'error');
+      }
+    }
+
+    function renderCheckins(checkins) {
+      checkinTableBody.innerHTML = '';
+      checkins.forEach(c => {
+        const row = checkinTableBody.insertRow();
+        row.innerHTML = `<td>${c.id}</td><td>${c.patientReference}</td><td>${formatDate(c.time)}</td><td>${c.status}</td>`;
+      });
+    }
+
+    function renderRooms(rooms) {
+        clinicFloorPlan.innerHTML = '';
+        rooms.forEach(room => {
+            const roomDiv = document.createElement('div');
+            roomDiv.className = `fp-room ${room.status || 'unknown'}`; // unknown is a fallback
+            roomDiv.innerHTML = `<div class="room-name">${room.name}</div>
+                                 <div class="room-status">${(room.status || 'N/A').replace('_', ' ')}</div>
+                                 <div class="room-patient">${room.currentPatientId ? `Patient: ${room.currentPatientId}` : 'Empty'}</div>`;
+            clinicFloorPlan.appendChild(roomDiv);
+        });
+    }
+    
+    function renderAlerts(alerts) {
+      alertTableBody.innerHTML = '';
+      alerts.forEach(a => {
+        const row = alertTableBody.insertRow();
+        const priorityClass = a.priority === 'high' ? 'error' : a.priority === 'medium' ? 'request' : '';
+        let actionCell = `<td class="acknowledged">Acknowledged by ${a.acknowledgedBy} at ${formatDate(a.acknowledgedAt)}</td>`;
+        if (!a.acknowledgedBy) {
+            actionCell = `<td><button class="ack-button" data-id="${a.id}">Acknowledge</button></td>`;
+        }
+        row.innerHTML = `<td>${a.type}</td><td>${a.message}</td><td>${formatDate(a.time)}</td><td class="${priorityClass}">${a.priority}</td>${actionCell}`;
+      });
+      // Add event listeners to new acknowledge buttons
+      document.querySelectorAll('.ack-button').forEach(button => {
+          button.addEventListener('click', handleAcknowledgeAlert);
+      });
+    }
+
+    async function handleAcknowledgeAlert(event) {
+        const alertId = event.target.dataset.id;
+        addLog(`Acknowledging alert ID: ${alertId}`, 'request');
+        try {
+            const response = await fetch(`${API_URL}/alerts/${alertId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    acknowledgedBy: 'Demo User', // Or a dynamic user
+                    acknowledgedAt: new Date().toISOString()
+                })
+            });
+            if (response.ok) {
+                addLog(`Alert ${alertId} acknowledged successfully.`, 'success');
+                fetchData(); // Refresh data
+            } else {
+                throw new Error(`API error: ${response.status}`);
+            }
+        } catch (error) {
+            addLog(`Error acknowledging alert: ${error.message}`, 'error');
+        }
+    }
+
+    function updateRoomStatusChart(rooms) {
+        const statusCounts = rooms.reduce((acc, room) => {
+            const status = room.status || 'unknown';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const labels = Object.keys(statusCounts);
+        const data = Object.values(statusCounts);
+        
+        // Define colors mapping for room statuses
+        const colorMap = {
+            'ready': { bg: 'rgba(46, 204, 113, 0.7)', border: 'rgba(46, 204, 113, 1)' },
+            'occupied': { bg: 'rgba(243, 156, 18, 0.7)', border: 'rgba(243, 156, 18, 1)' },
+            'needs_cleaning': { bg: 'rgba(231, 76, 60, 0.7)', border: 'rgba(231, 76, 60, 1)' },
+            'unknown': { bg: 'rgba(149, 165, 166, 0.7)', border: 'rgba(149, 165, 166, 1)' }
+        };
+        
+        // Get color arrays in the same order as the labels
+        const backgroundColors = labels.map(label => colorMap[label]?.bg || 'rgba(149, 165, 166, 0.7)');
+        const borderColors = labels.map(label => colorMap[label]?.border || 'rgba(149, 165, 166, 1)');
+        
+        const chartData = {
+            labels: labels,
+            datasets: [{
+                label: 'Room Statuses',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 1
+            }]
+        };
+
+        if (roomStatusChart) {
+            // Instead of updating immediately, use animation
+            roomStatusChart.data.labels = chartData.labels;
+            roomStatusChart.data.datasets[0].data = chartData.datasets[0].data;
+            roomStatusChart.data.datasets[0].backgroundColor = chartData.datasets[0].backgroundColor;
+            roomStatusChart.data.datasets[0].borderColor = chartData.datasets[0].borderColor;
+            roomStatusChart.update('none'); // Use 'none' to disable animation for smoother updates
+        } else {
+            roomStatusChart = new Chart(roomStatusChartCanvas, {
+                type: 'pie',
+                data: chartData,
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000 // Only animate on initial creation
+                    }
+                }
+            });
+        }
+    }
+
+    // --- Button Event Handlers ---
+    checkinButton.addEventListener('click', async () => {
+      if (!await checkApiStatus()) return;
+      
+      const buttonText = checkinButton.querySelector('.button-text');
+      buttonText.textContent = 'Processing...';
+      addLog('Check-In button pressed', 'request');
+      const clearProgress = showButtonProgress(checkinButton);
+
+      try {
+        const { patientId, patientReference } = generatePatientData();
+        const response = await fetch(`${API_URL}/checkins`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientId, patientReference, time: new Date().toISOString(), status: 'checked-in', staffId: 'current-user-123', notes: '' })
+        });
+        
+        if (response.ok) {
+          addLog(`Patient #${patientId} checked in successfully`, 'success');
+          buttonText.textContent = `Patient #${patientId}`;
+          fetchData();
+        } else { throw new Error(`API returned ${response.status}`); }
+      } catch (error) {
+        addLog(`Check-in error: ${error.message}`, 'error');
+        buttonText.textContent = 'Error';
+      } finally {
+        clearProgress();
+        setTimeout(() => { buttonText.textContent = 'Check-In'; }, 3000);
+      }
+    });
+    
+    // For room button, let's assume we are toggling Room 1 status for simplicity in this demo
+    let room1CurrentStatus = 'ready'; // Initial assumption, will be overwritten by API
+    roomButton.addEventListener('click', async () => {
+        if (!await checkApiStatus()) return;
+
+        const buttonText = roomButton.querySelector('.button-text');
+        addLog('Room Readiness (Room 1) button pressed', 'request');
+        buttonText.textContent = 'Updating...';
+        const clearProgress = showButtonProgress(roomButton);
+
+        try {
+            // Fetch current status of Room 1 first to toggle correctly
+            const roomRes = await fetch(`${API_URL}/rooms/1`);
+            if (!roomRes.ok) throw new Error(`Failed to fetch room 1 status: ${roomRes.status}`);
+            const roomData = await roomRes.json();
+            room1CurrentStatus = roomData.status;
+
+            let newStatus;
+            // Simple toggle logic for demo: ready -> occupied -> needs_cleaning -> ready
+            if (room1CurrentStatus === 'ready') newStatus = 'occupied';
+            else if (room1CurrentStatus === 'occupied') newStatus = 'needs_cleaning';
+            else newStatus = 'ready'; // needs_cleaning or unknown goes to ready
+
+            const response = await fetch(`${API_URL}/rooms/1`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    status: newStatus, 
+                    lastCleaned: newStatus === 'ready' ? new Date().toISOString() : roomData.lastCleaned,
+                    currentPatientId: newStatus === 'occupied' ? (Math.floor(Math.random() * 500) + 1) : null // Assign random patient if occupied
+                })
+            });
+
+            if (response.ok) {
+                addLog(`Room 1 status updated to: ${newStatus.replace('_', ' ')}`, 'success');
+                buttonText.textContent = `Room 1 ${newStatus.replace('_', ' ')}`;
+                fetchData();
+            } else { throw new Error(`API returned ${response.status}`); }
+        } catch (error) {
+            addLog(`Room update error: ${error.message}`, 'error');
+            buttonText.textContent = 'Error';
+        } finally {
+            clearProgress();
+            // Text will be updated by fetchData or reset if error
+            setTimeout(() => { 
+                 // Attempt to re-fetch and set text, or default
+                fetch(`${API_URL}/rooms/1`).then(r => r.json()).then(d => {
+                    buttonText.textContent = `Room 1 ${d.status.replace('_', ' ')}`;
+                }).catch(() => buttonText.textContent = 'Room 1 Ready');
+            }, 3000);
+        }
+    });
+    
+    let currentAlertIndex = 0;
+    const alertTypes = [
+      { id: 'medical', title: 'Medical Emergency', message: 'Medical emergency in Room 1', icon: '⚠️', roomId: 1 },
+      { id: 'assistance', title: 'Assistance Needed', message: 'Assistance needed in Room 2', icon: '🔔', roomId: 2 },
+      { id: 'supplies', title: 'Supplies Needed', message: 'Supplies needed in Room 3', icon: '📦', roomId: 3 }
+    ];
+    // Initialize alert button text
+    alertButton.querySelector('.button-text').textContent = alertTypes[currentAlertIndex].title.replace('\\n', ' ');
+    alertButton.querySelector('.button-icon').textContent = alertTypes[currentAlertIndex].icon;
+
+
+    alertButton.addEventListener('click', () => {
+        const currentAlert = alertTypes[currentAlertIndex];
+        const action = async () => {
+            if (!await checkApiStatus()) return;
+            
+            addLog(`Sending ${currentAlert.title.replace('\\n', ' ')} alert`, 'request');
+            const buttonText = alertButton.querySelector('.button-text');
+            buttonText.textContent = 'Sending...';
+            const clearProgress = showButtonProgress(alertButton);
+
+            try {
+                await fetch(`${API_URL}/alerts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    type: currentAlert.id, 
+                    message: currentAlert.message, 
+                    time: new Date().toISOString(), 
+                    priority: currentAlert.id === 'medical' ? 'high' : 'medium', 
+                    sender: 'current-user-123', 
+                    requiresAcknowledgment: true, 
+                    acknowledgedBy: null, 
+                    acknowledgedAt: null,
+                    roomId: currentAlert.roomId
+                })
+                });
+                addLog(`Alert sent successfully`, 'success');
+                buttonText.textContent = 'Alert Sent';
+                fetchData();
+            } catch (error) {
+                addLog(`Alert error: ${error.message}`, 'error');
+                buttonText.textContent = 'Error';
+            } finally {
+                clearProgress();
+                setTimeout(() => {
+                    const freshAlert = alertTypes[currentAlertIndex]; // Re-fetch in case it cycled
+                    alertButton.querySelector('.button-text').textContent = freshAlert.title.replace('\\n', ' ');
+                }, 3000);
+            }
+        };
+
+        if (currentAlert.id === 'medical') {
+            showConfirmationModal(`Confirm sending a "${currentAlert.title.replace('\\n', ' ')}"? This is a critical alert.`, action);
+        } else {
+            action();
+        }
+    });
+    
+    holdAlertButton.addEventListener('click', () => {
+      currentAlertIndex = (currentAlertIndex + 1) % alertTypes.length;
+      const currentAlert = alertTypes[currentAlertIndex];
+      alertButton.querySelector('.button-icon').textContent = currentAlert.icon;
+      alertButton.querySelector('.button-text').textContent = currentAlert.title.replace('\\n', ' ');
+      addLog(`Alert type changed to: ${currentAlert.title.replace('\\n', ' ')}`, 'feedback');
+    });
+    
+    // --- Initialization ---
+    addLog("Initializing ClinicStreamDeck Simulator UI...");
+    fetchData(); // Initial data load
+    setInterval(fetchData, 7000); // Refresh data periodically
+  </script>
+</body>
+</html>
+`

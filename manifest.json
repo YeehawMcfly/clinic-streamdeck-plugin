@@ -1,0 +1,70 @@
+{
+  "Name": "ClinicStreamDeck Assistant",
+  "UUID": "com.example.clinicstreamdeck",
+  "Author": "Your Name",
+  "Version": "1.0.0",
+  "CodePath": "dist/index.js",
+  "Description": "Streamlines clinic operations with quick-trigger macros for patient check-in, room management, and alert dispatching",
+  "Category": "ClinicTools",
+  "CategoryIcon": "assets/category-icon.png",
+  "Icon": "assets/plugin-icon.png",
+  "URL": "https://github.com/yourusername/clinic-streamdeck-plugin",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "5.0"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.15"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Actions": [
+    {
+      "Name": "Patient Check-In",
+      "UUID": "com.example.clinicstreamdeck.checkin",
+      "Icon": "assets/checkin-action.png",
+      "States": [
+        {
+          "Image": "assets/checkin-ready.png",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ],
+      "Tooltip": "Process patient check-in with auto-generated ID",
+      "PropertyInspectorPath": "propertyinspector/checkin.html"
+    },
+    {
+      "Name": "Room Readiness",
+      "UUID": "com.example.clinicstreamdeck.room",
+      "Icon": "assets/room-action.png",
+      "States": [
+        {
+          "Image": "assets/room-not-ready.png",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ],
+      "Tooltip": "Update room status (ready/not ready)",
+      "PropertyInspectorPath": "propertyinspector/room.html"
+    },
+    {
+      "Name": "Dispatch Alert",
+      "UUID": "com.example.clinicstreamdeck.alert",
+      "Icon": "assets/alert-action.png",
+      "States": [
+        {
+          "Image": "assets/alert-ready.png",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ],
+      "Tooltip": "Send urgent alerts to clinic staff",
+      "PropertyInspectorPath": "propertyinspector/alert.html"
+    }
+  ]
+}
